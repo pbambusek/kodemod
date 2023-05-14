@@ -1,0 +1,39 @@
+{
+    "name": "kodemod",
+    "version": "1.0.0",
+    "description": "A simple codemod runner for codemods built as Babel plugins. Prettier included.",
+    "author": "Petr Bambusek (https://github.com/pbambusek)",
+    "license": "MIT",
+    "homepage": "https://github.com/pbambusek/kodemod#readme",
+    "bugs": {
+        "url": "https://github.com/pbambusek/kodemod/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/pbambusek/kodemod.git"
+    },
+    "keywords": [
+        "codemod",
+        "runner",
+        "babel",
+        "cli"
+    ],
+    "files": [
+        "dist"
+    ],
+    "bin": "./dist/index.js",
+    "packageManager": "yarn@3.5.1",
+    "dependencies": {
+        "@babel/core": "7.21.8",
+        "@babel/plugin-syntax-typescript": "7.21.4",
+        "chalk": "4.1.2",
+        "globby": "11.1.0",
+        "prettier": "2.8.8",
+        "ts-node": "10.9.1",
+        "yargs": "17.7.2"
+    },
+    "devDependencies": {
+        "@types/node": "20.1.4",
+        "typescript": "5.0.4"
+    }
+}

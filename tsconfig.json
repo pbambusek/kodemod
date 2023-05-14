@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "lib": ["esnext", "dom"],
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "outDir": "dist"
+    },
+    "include": ["src/**/*"],
+    "ts-node": {
+        "transpileOnly": true
+    }
+}
