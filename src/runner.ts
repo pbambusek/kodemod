@@ -89,7 +89,7 @@ void (async () => {
          * See: https://github.com/mrmlnc/fast-glob#how-to-write-patterns-on-windows
          */
         const normalizedPath = inputPath.replace(/\\/g, '/');
-        const filePaths = await globby(`${normalizedPath}/**/*.{js,jsx,ts,tsx}`);
+        const filePaths = await globby([`${normalizedPath}/**/*.{js,jsx,ts,tsx}`, '!**/node_modules']);
 
         let transformedFiles = 0;
         let errorFiles = 0;
