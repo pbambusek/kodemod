@@ -84,7 +84,12 @@ void (async () => {
 
     const stats = await fs.stat(inputPath);
     if (stats.isDirectory()) {
-        const filePaths = await globby(`${inputPath}/**/*.{js,jsx,ts,tsx}`);
+        /**
+         * The path normalization is required for Windows paths
+         * See: https://github.com/mrmlnc/fast-glob#how-to-write-patterns-on-windows
+         */
+        const normalizedPath = inputPath.replace(/\\/g, '/');
+        const filePaths = await globby(`${normalizedPath}/**/*.{js,jsx,ts,tsx}`);
 
         let transformedFiles = 0;
         let errorFiles = 0;

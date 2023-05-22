@@ -1,6 +1,6 @@
 {
     "name": "kodemod",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "A simple codemod runner for codemods built as Babel plugins. Prettier included.",
     "author": "Petr Bambusek (https://github.com/pbambusek)",
     "license": "MIT",
@@ -23,6 +23,9 @@
     ],
     "bin": "./dist/index.js",
     "packageManager": "yarn@3.5.1",
+    "scripts": {
+        "build": "tsc"
+    },
     "dependencies": {
         "@babel/core": "7.21.8",
         "@babel/plugin-syntax-typescript": "7.21.4",
