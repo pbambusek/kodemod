@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import globby from 'globby';
 import prettier from 'prettier';
 import yargs from 'yargs';
+import * as recast from 'recast';
 
 type PluginOptions = Record<string, unknown>;
 
@@ -21,8 +22,14 @@ async function transformFile(
     try {
         const code = await fs.readFile(inputFilename, 'utf8');
 
-        const result = await babel.transformAsync(code, {
+        const ast = recast.parse(code, {
+            parser: require('recast/parsers/babel-ts'),
+        });
+
+        await babel.transformFromAstAsync(ast, code, {
+            ast: true,
             retainLines: true,
+            cloneInputAst: false,
             plugins: [
                 // prettier-keep-line
                 ['@babel/plugin-syntax-typescript', { isTSX: inputFilename.endsWith('.tsx') }],
@@ -30,18 +37,18 @@ async function transformFile(
             ],
         });
 
-        if (result) {
-            const prettierConfig = await prettier.resolveConfig(inputFilename);
-            const transformedFormatted = prettier.format(result.code || '', {
-                ...prettierConfig,
-                parser: 'typescript',
-            });
+        const transformed = recast.print(ast);
 
-            if (transformedFormatted !== code) {
-                await fs.writeFile(inputFilename, transformedFormatted);
-                console.log(chalk.reset(inputFilename));
-                return { transformed: true, error: false };
-            }
+        const prettierConfig = await prettier.resolveConfig(inputFilename);
+        const formattedCode = prettier.format(transformed.code || '', {
+            filepath: inputFilename,
+            ...prettierConfig,
+        });
+
+        if (formattedCode !== code) {
+            await fs.writeFile(inputFilename, formattedCode);
+            console.log(chalk.reset(inputFilename));
+            return { transformed: true, error: false };
         }
 
         console.log(chalk.dim(inputFilename));
