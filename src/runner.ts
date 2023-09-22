@@ -30,6 +30,7 @@ async function transformFile(
             ast: true,
             retainLines: true,
             cloneInputAst: false,
+            filename: inputFilename,
             plugins: [
                 // prettier-keep-line
                 ['@babel/plugin-syntax-typescript', { isTSX: inputFilename.endsWith('.tsx') }],

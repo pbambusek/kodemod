@@ -1,6 +1,6 @@
 {
     "name": "kodemod",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "A simple codemod runner for codemods built as Babel plugins. Prettier included.",
     "author": "Petr Bambusek (https://github.com/pbambusek)",
     "license": "MIT",
