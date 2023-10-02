@@ -17,7 +17,8 @@ async function loadPlugin(pluginPath: string, pluginOptions: PluginOptions = {})
 
 async function transformFile(
     inputFilename: string,
-    plugin: [Visitor, PluginOptions]
+    plugin: [Visitor, PluginOptions],
+    { verbose }: { verbose: boolean }
 ): Promise<{ transformed: boolean; error: boolean }> {
     try {
         const code = await fs.readFile(inputFilename, 'utf8');
@@ -41,7 +42,7 @@ async function transformFile(
         const transformed = recast.print(ast);
 
         const prettierConfig = await prettier.resolveConfig(inputFilename);
-        const formattedCode = prettier.format(transformed.code || '', {
+        const formattedCode = await prettier.format(transformed.code || '', {
             filepath: inputFilename,
             ...prettierConfig,
         });
@@ -52,7 +53,10 @@ async function transformFile(
             return { transformed: true, error: false };
         }
 
-        console.log(chalk.dim(inputFilename));
+        if (verbose) {
+            console.log(chalk.dim(inputFilename));
+        }
+
         return { transformed: false, error: false };
     } catch (err) {
         console.error(chalk.red(`Error in ${inputFilename}: ${err.message}`));
@@ -65,6 +69,7 @@ void (async () => {
         inputPath,
         plugin: pluginPath,
         pluginOptions,
+        verbose,
     } = yargs(process.argv.slice(2))
         .usage('Usage: $0 --plugin <pluginPath> [options] <inputPath>')
         .command('$0 <inputPath>', 'Transform files in the inputPath', (yargs) => {
@@ -86,8 +91,14 @@ void (async () => {
             type: 'string',
             coerce: JSON.parse,
         })
+        .option('verbose', {
+            alias: 'v',
+            describe: 'Output more information during execution',
+            type: 'boolean',
+        })
         .version(false).argv;
 
+    const executionStart = performance.now();
     const plugin = await loadPlugin(pluginPath, pluginOptions);
 
     const stats = await fs.stat(inputPath);
@@ -102,8 +113,9 @@ void (async () => {
         let transformedFiles = 0;
         let errorFiles = 0;
 
+        console.log(`${filePaths.length} found files...`);
         for (const filePath of filePaths) {
-            const { transformed, error } = await transformFile(filePath, plugin);
+            const { transformed, error } = await transformFile(filePath, plugin, { verbose });
             if (transformed) {
                 transformedFiles++;
             }
@@ -112,7 +124,11 @@ void (async () => {
             }
         }
 
-        console.log(`\n${filePaths.length} found files, ${transformedFiles} changed files, ${errorFiles} errors`);
+        console.log(`\n${transformedFiles} changed files, ${errorFiles} errors`);
+
+        const executionEnd = performance.now();
+        const totalExecution = ((executionEnd - executionStart) / 1000).toFixed(2);
+        console.log(`Executed in ${totalExecution}s`);
     } else {
         console.error('Invalid input path. Provide a directory.');
     }
