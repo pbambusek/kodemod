@@ -32,11 +32,10 @@ async function transformFile(
             retainLines: true,
             cloneInputAst: false,
             filename: inputFilename,
-            plugins: [
-                // prettier-keep-line
-                ['@babel/plugin-syntax-typescript', { isTSX: inputFilename.endsWith('.tsx') }],
-                plugin,
-            ],
+            parserOpts: {
+                plugins: ['jsx', 'typescript'],
+            },
+            plugins: [plugin],
         });
 
         const transformed = recast.print(ast);
@@ -108,7 +107,10 @@ void (async () => {
          * See: https://github.com/mrmlnc/fast-glob#how-to-write-patterns-on-windows
          */
         const normalizedPath = inputPath.replace(/\\/g, '/');
-        const filePaths = await globby([`${normalizedPath}/**/*.{js,jsx,ts,tsx}`, '!**/node_modules']);
+        const filePaths = await globby([`${normalizedPath}/**/*.{js,jsx,ts,tsx}`, '!**/node_modules'], {
+            gitignore: true,
+            cwd: process.env.PROJECT_CWD || process.env.PWD || process.cwd(),
+        });
 
         let transformedFiles = 0;
         let errorFiles = 0;
