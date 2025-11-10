@@ -1,10 +1,12 @@
 import fs from 'fs/promises';
+import os from 'os';
 import path from 'path';
 import * as babel from '@babel/core';
 import { Visitor } from '@babel/traverse';
 import chalk from 'chalk';
 import globby from 'globby';
 import prettier from 'prettier';
+import pLimit from 'p-limit';
 import yargs from 'yargs';
 import * as recast from 'recast';
 
@@ -32,11 +34,10 @@ async function transformFile(
             retainLines: true,
             cloneInputAst: false,
             filename: inputFilename,
-            plugins: [
-                // prettier-keep-line
-                ['@babel/plugin-syntax-typescript', { isTSX: inputFilename.endsWith('.tsx') }],
-                plugin,
-            ],
+            parserOpts: {
+                plugins: ['jsx', 'typescript'],
+            },
+            plugins: [plugin],
         });
 
         const transformed = recast.print(ast);
@@ -70,6 +71,7 @@ void (async () => {
         plugin: pluginPath,
         pluginOptions,
         verbose,
+        concurrency,
     } = yargs(process.argv.slice(2))
         .usage('Usage: $0 --plugin <pluginPath> [options] <inputPath>')
         .command('$0 <inputPath>', 'Transform files in the inputPath', (yargs) => {
@@ -96,10 +98,17 @@ void (async () => {
             describe: 'Output more information during execution',
             type: 'boolean',
         })
+        .option('concurrency', {
+            alias: 'c',
+            describe: 'Number of concurrent transformations',
+            type: 'number',
+            default: os.availableParallelism(),
+        })
         .version(false).argv;
 
     const executionStart = performance.now();
     const plugin = await loadPlugin(pluginPath, pluginOptions);
+    const concurrencyLimit = pLimit(concurrency);
 
     const stats = await fs.stat(inputPath);
     if (stats.isDirectory()) {
@@ -108,18 +117,29 @@ void (async () => {
          * See: https://github.com/mrmlnc/fast-glob#how-to-write-patterns-on-windows
          */
         const normalizedPath = inputPath.replace(/\\/g, '/');
-        const filePaths = await globby([`${normalizedPath}/**/*.{js,jsx,ts,tsx}`, '!**/node_modules']);
+        const filePaths = await globby([`${normalizedPath}/**/*.{js,jsx,ts,tsx}`, '!**/node_modules'], {
+            gitignore: true,
+            cwd: process.env.PROJECT_CWD || process.env.PWD || process.cwd(),
+        });
 
         let transformedFiles = 0;
         let errorFiles = 0;
 
         console.log(`${filePaths.length} found files...`);
-        for (const filePath of filePaths) {
-            const { transformed, error } = await transformFile(filePath, plugin, { verbose });
-            if (transformed) {
-                transformedFiles++;
-            }
-            if (error) {
+        const results = await Promise.allSettled(
+            filePaths.map((filePath) => concurrencyLimit(() => transformFile(filePath, plugin, { verbose })))
+        );
+
+        for (const result of results) {
+            if (result.status === 'fulfilled') {
+                const { transformed, error } = result.value;
+                if (transformed) {
+                    transformedFiles++;
+                }
+                if (error) {
+                    errorFiles++;
+                }
+            } else {
                 errorFiles++;
             }
         }
