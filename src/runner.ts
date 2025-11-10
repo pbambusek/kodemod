@@ -1,10 +1,12 @@
 import fs from 'fs/promises';
+import os from 'os';
 import path from 'path';
 import * as babel from '@babel/core';
 import { Visitor } from '@babel/traverse';
 import chalk from 'chalk';
 import globby from 'globby';
 import prettier from 'prettier';
+import pLimit from 'p-limit';
 import yargs from 'yargs';
 import * as recast from 'recast';
 
@@ -69,6 +71,7 @@ void (async () => {
         plugin: pluginPath,
         pluginOptions,
         verbose,
+        concurrency,
     } = yargs(process.argv.slice(2))
         .usage('Usage: $0 --plugin <pluginPath> [options] <inputPath>')
         .command('$0 <inputPath>', 'Transform files in the inputPath', (yargs) => {
@@ -95,10 +98,17 @@ void (async () => {
             describe: 'Output more information during execution',
             type: 'boolean',
         })
+        .option('concurrency', {
+            alias: 'c',
+            describe: 'Number of concurrent transformations',
+            type: 'number',
+            default: os.availableParallelism(),
+        })
         .version(false).argv;
 
     const executionStart = performance.now();
     const plugin = await loadPlugin(pluginPath, pluginOptions);
+    const concurrencyLimit = pLimit(concurrency);
 
     const stats = await fs.stat(inputPath);
     if (stats.isDirectory()) {
@@ -116,12 +126,20 @@ void (async () => {
         let errorFiles = 0;
 
         console.log(`${filePaths.length} found files...`);
-        for (const filePath of filePaths) {
-            const { transformed, error } = await transformFile(filePath, plugin, { verbose });
-            if (transformed) {
-                transformedFiles++;
-            }
-            if (error) {
+        const results = await Promise.allSettled(
+            filePaths.map((filePath) => concurrencyLimit(() => transformFile(filePath, plugin, { verbose })))
+        );
+
+        for (const result of results) {
+            if (result.status === 'fulfilled') {
+                const { transformed, error } = result.value;
+                if (transformed) {
+                    transformedFiles++;
+                }
+                if (error) {
+                    errorFiles++;
+                }
+            } else {
                 errorFiles++;
             }
         }

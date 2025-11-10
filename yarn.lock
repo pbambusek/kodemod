@@ -1027,6 +1027,7 @@ __metadata:
     "@types/node": ^20.1.4
     chalk: ^4.1.2
     globby: ^11.1.0
+    p-limit: ^7.2.0
     prettier: ^3.0.3
     recast: ^0.23.3
     ts-node: ^10.9.1
@@ -1100,6 +1101,15 @@ __metadata:
   version: 1.1.1
   resolution: "object-keys@npm:1.1.1"
   checksum: b363c5e7644b1e1b04aa507e88dcb8e3a2f52b6ffd0ea801e4c7a62d5aa559affe21c55a07fd4b1fd55fc03a33c610d73426664b20032405d7b92a1414c34d6a
+  languageName: node
+  linkType: hard
+
+"p-limit@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "p-limit@npm:7.2.0"
+  dependencies:
+    yocto-queue: ^1.2.1
+  checksum: 6e9e5cc3e9fb41745e566cd16d02ac9f3a88e116f5c2df79b8a5e575e94aa8f3b8135b2de598116b31ea187b5d05b07d112094cc79bf085dfaa3deaa2afa9d15
   languageName: node
   linkType: hard
 
@@ -1416,5 +1426,12 @@ __metadata:
   version: 3.1.1
   resolution: "yn@npm:3.1.1"
   checksum: 2c487b0e149e746ef48cda9f8bad10fc83693cd69d7f9dcd8be4214e985de33a29c9e24f3c0d6bcf2288427040a8947406ab27f7af67ee9456e6b84854f02dd6
+  languageName: node
+  linkType: hard
+
+"yocto-queue@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "yocto-queue@npm:1.2.1"
+  checksum: 0843d6c2c0558e5c06e98edf9c17942f25c769e21b519303a5c2adefd5b738c9b2054204dc856ac0cd9d134b1bc27d928ce84fd23c9e2423b7e013d5a6f50577
   languageName: node
   linkType: hard
